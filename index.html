@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Bantuan SPKLU</title>
+
+<script>
+const lokasiSPKLU = {
+  "SPKLU01": "SPKLU PLN UID NTB - Mataram",
+  "SPKLU02": "SPKLU Bandara Lombok",
+  "SPKLU03": "SPKLU Mandalika"
+};
+
+async function getJadwal() {
+  const response = await fetch('jadwal.csv');
+  const data = await response.text();
+  return data.split('\n').slice(1).map(row => {
+    const [tanggal, jam_mulai, jam_selesai, teknisi, nomor] = row.split(',');
+    return { tanggal, jam_mulai, jam_selesai, teknisi, nomor };
+  });
+}
+
+function jamSekarang() {
+  const now = new Date();
+  return now.toTimeString().slice(0,5);
+}
+
+function tanggalSekarang() {
+  const now = new Date();
+  return now.toISOString().slice(0,10);
+}
+
+async function kirimWA() {
+  const url = new URL(window.location.href);
+  const id = url.searchParams.get("id");
+
+  const jadwal = await getJadwal();
+  const tgl = tanggalSekarang();
+  const jam = jamSekarang();
+
+  const shift = jadwal.find(j =>
+    j.tanggal === tgl &&
+    jam >= j.jam_mulai &&
+    jam <= j.jam_selesai
+  );
+
+  if (!shift) {
+    document.body.innerHTML = "<h2>Tidak ada teknisi piket saat ini</h2>";
+    return;
+  }
+
+  const lokasi = lokasiSPKLU[id] || id;
+
+  const pesan = `Halo ${shift.teknisi},
+Saya berada di ${lokasi}.
+Mohon bantuan pengecekan charger.
+
+Waktu: ${tgl} ${jam}`;
+
+  const link = `https://wa.me/${shift.nomor}?text=${encodeURIComponent(pesan)}`;
+  window.location.href = link;
+}
+
+window.onload = kirimWA;
+</script>
+</head>
+<body>
+<h2>Menghubungkan ke teknisi piket...</h2>
+</body>
+</html>
