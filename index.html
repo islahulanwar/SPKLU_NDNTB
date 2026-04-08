@@ -102,8 +102,31 @@ async function getJadwal() {
   });
 }
 
-function nowTime(){return new Date().toTimeString().slice(0,5);}
-function nowDate(){return new Date().toISOString().slice(0,10);}
+function pad(n){ return n.toString().padStart(2,'0'); }
+
+function nowFormatted(){
+  const d = new Date();
+
+  const dd = pad(d.getDate());
+  const mm = pad(d.getMonth()+1);
+  const yyyy = d.getFullYear();
+
+  const hh = pad(d.getHours());
+  const min = pad(d.getMinutes());
+
+  return `${dd}-${mm}-${yyyy} ${hh}:${min}`;
+}
+
+function nowDateCSV(){
+  // format tetap yyyy-mm-dd untuk cocok dengan jadwal.csv
+  const d = new Date();
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function nowTime(){
+  const d = new Date();
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
 async function start(){
   const url = new URL(window.location.href);
@@ -114,7 +137,7 @@ async function start(){
 
   const jadwal = await getJadwal();
   const shift = jadwal.find(j =>
-    j.tgl === nowDate() &&
+    j.tgl === nowDateCSV() &&
     nowTime() >= j.mulai &&
     nowTime() <= j.selesai
   );
@@ -125,11 +148,11 @@ async function start(){
     return;
   }
 
-  const pesan = `Halo ${shift.nama},
+  const pesan = `Halo mas ${shift.nama},
 Saya berada di ${lokasi}.
-Mohon bantuan pengecekan SPKLU.
+Mohon bantuan untuk pengecekan unit SPKLU tersebut.
 
-Waktu: ${nowDate()} ${nowTime()}`;
+Waktu: ${nowFormatted()}`;
 
   const link = `https://wa.me/${shift.no}?text=${encodeURIComponent(pesan)}`;
 
