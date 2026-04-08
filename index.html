@@ -3,47 +3,99 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Command Center SPKLU PLN Nusa Daya NTB</title>
+<title>Jadwal Piket SPKLU ND NTB</title>
 
 <style>
 body{
-  margin:0;
   font-family: Arial, Helvetica, sans-serif;
-  background: linear-gradient(135deg,#0f4c81,#1e88e5);
-  color:white;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
+  background:#f4f6f8;
+  margin:0;
+  padding:20px;
+}
+.container{
+  max-width:1100px;
+  margin:auto;
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.1);
+}
+h1{
+  text-align:center;
+  color:#2c3e50;
+}
+.search{
+  margin:15px 0;
+  text-align:right;
+}
+.search input{
+  padding:8px;
+  width:280px;
+  border-radius:6px;
+  border:1px solid #ccc;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+th, td{
+  padding:10px;
   text-align:center;
 }
-.card{
-  background:white;
-  color:#333;
-  padding:30px;
-  border-radius:12px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.3);
-  width:90%;
-  max-width:460px;
+th{
+  background:#2c3e50;
+  color:white;
 }
-h1{margin:0 0 10px 0;font-size:22px;color:#0f4c81;}
-#lokasi{font-weight:bold;margin:10px 0;color:#1e88e5;}
-.loader{
-  margin:20px auto;
-  border:6px solid #eee;
-  border-top:6px solid #1e88e5;
-  border-radius:50%;
-  width:40px;height:40px;
-  animation:spin 1s linear infinite;
+tr:nth-child(even){
+  background:#f2f2f2;
 }
-@keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
-.small{font-size:13px;color:#777;margin-top:15px}
-.error{color:red;font-weight:bold}
+.btn-wa{
+  background:#25D366;
+  color:white;
+  padding:6px 10px;
+  border-radius:6px;
+  text-decoration:none;
+  font-size:13px;
+}
+.footer{
+  text-align:center;
+  margin-top:15px;
+  font-size:12px;
+  color:#777;
+}
 </style>
+</head>
+
+<body>
+<div class="container">
+  <h1>Jadwal Piket SPKLU ND NTB</h1>
+
+  <div class="search">
+    <input type="text" id="searchInput" placeholder="Cari lokasi / teknisi...">
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Tanggal</th>
+        <th>Jam</th>
+        <th>Lokasi SPKLU</th>
+        <th>Teknisi (Kode)</th>
+        <th>Kontak</th>
+      </tr>
+    </thead>
+    <tbody id="jadwal-body"></tbody>
+  </table>
+
+  <div class="footer">
+    © 2026 SPKLU ND NTB
+  </div>
+</div>
 
 <script>
-// ====== MAPPING LOKASI ANDA ======
-const lokasiSPKLU = {
+// ====== MAPPING LOKASI ======
+const lokasiMap = {
   "SPKLU01": "SPKLU PLN UIW NTB",
   "SPKLU02": "SPKLU DINAS PERHUBUNGAN PROVINSI NTB",
   "SPKLU03": "SPKLU PLN UP3 MATARAM",
@@ -92,84 +144,43 @@ const lokasiSPKLU = {
   "SPKLU46": "SPKLU PLN ULP TALIWANG"
 };
 
-// ====== BACA CSV JADWAL ======
-async function getJadwal() {
-  const res = await fetch('jadwal.csv');
-  const text = await res.text();
-  return text.split('\n').slice(1).map(r=>{
-    const [tgl,mulai,selesai,nama,no]=r.split(',');
-    return {tgl,mulai,selesai,nama,no};
+async function loadCSV(){
+  const response = await fetch('jadwal.csv');
+  const data = await response.text();
+  const rows = data.split('\n').slice(1);
+
+  const tbody = document.getElementById('jadwal-body');
+  tbody.innerHTML = '';
+
+  rows.forEach(row=>{
+    if(!row.trim()) return;
+
+    const [tanggal,jamMulai,jamSelesai,teknisi,wa] = row.split(',');
+
+    const lokasi = lokasiMap[teknisi] || "Lokasi tidak ditemukan";
+
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${tanggal}</td>
+      <td>${jamMulai} - ${jamSelesai}</td>
+      <td>${lokasi}</td>
+      <td>${teknisi}</td>
+      <td><a class="btn-wa" href="https://wa.me/${wa}" target="_blank">WhatsApp</a></td>
+    `;
+
+    tbody.appendChild(tr);
   });
 }
 
-function pad(n){ return n.toString().padStart(2,'0'); }
+document.getElementById('searchInput').addEventListener('keyup', function(){
+  const filter = this.value.toLowerCase();
+  const rows = document.querySelectorAll("#jadwal-body tr");
+  rows.forEach(row=>{
+    row.style.display = row.innerText.toLowerCase().includes(filter) ? '' : 'none';
+  });
+});
 
-function nowFormatted(){
-  const d = new Date();
-
-  const dd = pad(d.getDate());
-  const mm = pad(d.getMonth()+1);
-  const yyyy = d.getFullYear();
-
-  const hh = pad(d.getHours());
-  const min = pad(d.getMinutes());
-
-  return `${dd}-${mm}-${yyyy} ${hh}:${min}`;
-}
-
-function nowDateCSV(){
-  // format tetap yyyy-mm-dd untuk cocok dengan jadwal.csv
-  const d = new Date();
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-}
-
-function nowTime(){
-  const d = new Date();
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
-async function start(){
-  const url = new URL(window.location.href);
-  const id = url.searchParams.get("id");
-  const lokasi = lokasiSPKLU[id] || id;
-
-  document.getElementById("lokasi").innerText = lokasi;
-
-  const jadwal = await getJadwal();
-  const shift = jadwal.find(j =>
-    j.tgl === nowDateCSV() &&
-    nowTime() >= j.mulai &&
-    nowTime() <= j.selesai
-  );
-
-  if(!shift){
-    document.getElementById("status").innerHTML =
-      "<div class='error'>Tidak ada teknisi piket saat ini</div>";
-    return;
-  }
-
-  const pesan = `Halo mas ${shift.nama},
-Saya berada di ${lokasi}.
-Mohon bantuan untuk pengecekan unit SPKLU tersebut.
-
-Waktu: ${nowFormatted()}`;
-
-  const link = `https://wa.me/${shift.no}?text=${encodeURIComponent(pesan)}`;
-
-  setTimeout(()=>{ window.location.href = link; }, 2500);
-}
-
-window.onload = start;
+loadCSV();
 </script>
-</head>
-
-<body>
-  <div class="card">
-    <h1>Helpdesk SPKLU PLN Nusa Daya NTB</h1>
-    <div id="lokasi">Memuat lokasi...</div>
-    <div class="loader"></div>
-    <div id="status">Menghubungkan ke teknisi piket...</div>
-    <div class="small">Silakan tunggu, Anda akan diarahkan ke WhatsApp teknisi.</div>
-  </div>
 </body>
 </html>
