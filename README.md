@@ -130,4 +130,4 @@ Tidak perlu edit HTML.
 ## 👤 Author
 
 Islahul Anwar  
-PLN Nusa Daya UP Nusra – NTB
+PLN Nusa Daya NTB
