@@ -127,8 +127,10 @@ return;
 
 const pesan = `Halo mas ${shift.nama}, Saya berada di ${lokasi}.
 Mohon bantuan untuk pengecekan unit SPKLU.
+Detail kendala: 
+Waktu: ${nowDate()} ${nowTime()}
 
-Waktu: ${nowDate()} ${nowTime()}`;
+*Mohon lampirkan foto kendala pada SPKLU jika ada.`;
 
 const link = `https://wa.me/${shift.no}?text=${encodeURIComponent(pesan)}`;
 
