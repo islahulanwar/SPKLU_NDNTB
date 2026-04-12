@@ -8,7 +8,6 @@
 <link rel="stylesheet" href="style.css">
 
 <script>
-// ====== BACA CSV LOKASI SPKLU ======
 async function getLokasiSPKLU(){
     const res = await fetch('list_SPKLU.csv');
     const text = await res.text();
@@ -26,7 +25,6 @@ async function getLokasiSPKLU(){
     return map;
 }
 
-// ====== BACA CSV JADWAL ======
 async function getJadwal() {
     const res = await fetch('jadwal.csv');
     const text = await res.text();
