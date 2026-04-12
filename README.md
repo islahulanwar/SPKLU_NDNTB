@@ -1,3 +1,4 @@
+<p align="center"><img src="ND.png" width="250" height="250" align="center"></p>
 
 # ⚡ Command Center SPKLU PLN Nusa Daya NTB (Helpdesk Otomatis)
 
