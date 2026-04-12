@@ -8,90 +8,60 @@
 <link rel="stylesheet" href="style.css">
 
 <script>
-// ====== MAPPING LOKASI ANDA ======
-const lokasiSPKLU = {
-"SPKLU01": "SPKLU PLN UIW NTB",
-"SPKLU02": "SPKLU DINAS PERHUBUNGAN PROVINSI NTB",
-"SPKLU03": "SPKLU PLN UP3 MATARAM",
-"SPKLU04": "SPKLU SANTIKA MATARAM",
-"SPKLU05": "SPKLU TAMAN SANGKAREANG",
-"SPKLU06": "SPKLU KANTOR GUBERNUR NTB",
-"SPKLU07": "SPKLU PRIME PARK HOTEL",
-"SPKLU08": "SPKLU EPICENTRUM 2",
-"SPKLU09": "SPKLU LOMBOK EPICENTRUM MALL 2",
-"SPKLU10": "SPKLU CENTER LOMBOK EPICENTRUM MALL",
-"SPKLU11": "SPKLU CENTER LOMBOK EPICENTRUM MALL",
-"SPKLU12": "SPKLU CENTER LOMBOK EPICENTRUM MALL",
-"SPKLU13": "SPKLU CENTER LOMBOK EPICENTRUM MALL",
-"SPKLU14": "SPKLU CENTER LOMBOK EPICENTRUM MALL",
-"SPKLU15": "SPKLU CENTER LOMBOK EPICENTRUM MALL",
-"SPKLU16": "SPKLU CENTER LOMBOK EPICENTRUM MALL",
-"SPKLU17": "SPKLU MVP GRAND NATURA",
-"SPKLU18": "SPKLU GOLDEN PALACE HOTEL",
-"SPKLU19": "SPKLU PLN PLTU JERANJANG",
-"SPKLU20": "SPKLU TRANSMART MATARAM",
-"SPKLU21": "SPKLU BANK MANDIRI CAKRA",
-"SPKLU22": "SPKLU KANTOR ESDM PROVINSI NTB",
-"SPKLU23": "SPKLU SASAKU LOMBOK",
-"SPKLU24": "SPKLU SHERATON SENGGIGI",
-"SPKLU25": "SPKLU PLN ULP TANJUNG NTB",
-"SPKLU26": "SPKLU ULP PRAYA",
-"SPKLU27": "SPKLU HOTEL ILLIRA",
-"SPKLU28": "SPKLU MANDALIKA",
-"SPKLU29": "SPKLU MANDALIKA",
-"SPKLU30": "SPKLU PLN ULP SELONG",
-"SPKLU31": "SPKLU SMK N 1 PRINGGABAYA",
-"SPKLU32": "SPKLU BOBO CABIN SEMBALUN",
-"SPKLU33": "SPKLU PLN UP3 SUMBAWA",
-"SPKLU34": "SPKLU PLN UP3 SUMBAWA",
-"SPKLU35": "SPKLU PLN ULP ALAS",
-"SPKLU36": "SPKLU PLN PLTD LABUHAN",
-"SPKLU37": "SPKLU PLN KP SORIUTU",
-"SPKLU38": "SPKLU PLN ULP EMPANG",
-"SPKLU39": "SPKLU PLN ULP EMPANG",
-"SPKLU40": "SPKLU PLN ULP DOMPU",
-"SPKLU41": "SPKLU PLN KP BOLO",
-"SPKLU42": "SPKLU PLN UP3 BIMA",
-"SPKLU43": "SPKLU PLN ULP BIMA KOTA",
-"SPKLU44": "SPKLU PLN ULP WOHA",
-"SPKLU45": "SPKLU PLN ULP SAPE",
-"SPKLU46": "SPKLU PLN ULP TALIWANG"
-};
+// ====== BACA CSV LOKASI SPKLU ======
+async function getLokasiSPKLU(){
+    const res = await fetch('list_SPKLU.csv');
+    const text = await res.text();
+
+    const rows = text.split('\n').slice(1);
+    const map = {};
+
+    rows.forEach(r=>{
+        const [id,lokasi] = r.split(',');
+        if(id && lokasi){
+            map[id.trim()] = lokasi.trim();
+        }
+    });
+
+    return map;
+}
 
 // ====== BACA CSV JADWAL ======
 async function getJadwal() {
-const res = await fetch('jadwal.csv');
-const text = await res.text();
-return text.split('\n').slice(1).map(r=>{
-const [tgl,mulai,selesai,nama,no]=r.split(',');
-return {tgl,mulai,selesai,nama,no};
-});
+    const res = await fetch('jadwal.csv');
+    const text = await res.text();
+    return text.split('\n').slice(1).map(r=>{
+        const [tgl,mulai,selesai,nama,no]=r.split(',');
+        return {tgl,mulai,selesai,nama,no};
+    });
 }
 
 function nowTime(){return new Date().toTimeString().slice(0,5);}
 function nowDate(){return new Date().toISOString().slice(0,10);}
 
 async function start(){
-const url = new URL(window.location.href);
-const id = url.searchParams.get("id");
-const lokasi = lokasiSPKLU[id] || id;
+    const url = new URL(window.location.href);
+    const id = url.searchParams.get("id");
 
-document.getElementById("lokasi").innerText = lokasi;
+    const lokasiMap = await getLokasiSPKLU();
+    const lokasi = lokasiMap[id] || id;
 
-const jadwal = await getJadwal();
-const shift = jadwal.find(j =>
-j.tgl === nowDate() &&
-nowTime() >= j.mulai &&
-nowTime() <= j.selesai
-);
+    document.getElementById("lokasi").innerText = lokasi;
 
-if(!shift){
-document.getElementById("status").innerHTML =
-"<div class='error'>Tidak ada teknisi piket saat ini</div>";
-return;
-}
+    const jadwal = await getJadwal();
+    const shift = jadwal.find(j =>
+        j.tgl === nowDate() &&
+        nowTime() >= j.mulai &&
+        nowTime() <= j.selesai
+    );
 
-const pesan = `Halo mas ${shift.nama}, Saya berada di ${lokasi}.
+    if(!shift){
+        document.getElementById("status").innerHTML =
+        "<div class='error'>Tidak ada teknisi piket saat ini</div>";
+        return;
+    }
+
+    const pesan = `Halo mas ${shift.nama}, Saya berada di ${lokasi}.
 
 • Detail kendala: 
 • Waktu: ${nowDate()} ${nowTime()}
@@ -99,9 +69,9 @@ Mohon bantuan untuk pengecekan unit SPKLU.
 
 *Mohon lampirkan foto kendala pada SPKLU jika ada.`;
 
-const link = `https://wa.me/${shift.no}?text=${encodeURIComponent(pesan)}`;
+    const link = `https://wa.me/${shift.no}?text=${encodeURIComponent(pesan)}`;
 
-setTimeout(()=>{ window.location.href = link; }, 2500);
+    setTimeout(()=>{ window.location.href = link; }, 2500);
 }
 
 window.onload = start;
